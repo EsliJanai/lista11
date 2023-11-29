@@ -1,0 +1,144 @@
+CREATE TABLE IF NOT EXISTS Categoria (
+    id INT PRIMARY KEY,
+    nome VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS Produto (
+    id INT PRIMARY KEY,
+    nome VARCHAR(50) NOT NULL,
+    preco DECIMAL(10, 2) NOT NULL,
+    categoria_id INT,
+    FOREIGN KEY (categoria_id) REFERENCES Categoria(id)
+);
+
+
+
+Operações CRUD em Java:
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+public class Main {
+    private static final String URL = "jdbc:hsqldb:mem:testdb";
+    private static final String USER = "sa";
+    private static final String PASSWORD = "";
+
+    public static void main(String[] args) {
+        try {
+            // Conectar ao banco de dados
+            Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
+
+            // Criar tabelas
+            createTables(connection);
+
+            // Inserir dados
+            insertData(connection);
+
+            // Consultar dados
+            selectData(connection);
+
+            // Atualizar dados
+            updateData(connection);
+
+            // Consultar dados novamente
+            selectData(connection);
+
+            // Remover dados
+            deleteData(connection);
+
+            // Consultar dados após exclusão
+            selectData(connection);
+
+            // Fechar a conexão
+            connection.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void createTables(Connection connection) throws SQLException {
+        String createCategoriaTable = "CREATE TABLE IF NOT EXISTS Categoria (" +
+                "id INT PRIMARY KEY, " +
+                "nome VARCHAR(50) NOT NULL)";
+        
+        String createProdutoTable = "CREATE TABLE IF NOT EXISTS Produto (" +
+                "id INT PRIMARY KEY, " +
+                "nome VARCHAR(50) NOT NULL, " +
+                "preco DECIMAL(10, 2) NOT NULL, " +
+                "categoria_id INT, " +
+                "FOREIGN KEY (categoria_id) REFERENCES Categoria(id))";
+
+        try (PreparedStatement statement1 = connection.prepareStatement(createCategoriaTable);
+             PreparedStatement statement2 = connection.prepareStatement(createProdutoTable)) {
+            statement1.executeUpdate();
+            statement2.executeUpdate();
+        }
+    }
+
+    private static void insertData(Connection connection) throws SQLException {
+        // Inserir dados na tabela Categoria
+        String insertCategoria = "INSERT INTO Categoria (id, nome) VALUES (?, ?)";
+        try (PreparedStatement statement = connection.prepareStatement(insertCategoria)) {
+            statement.setInt(1, 1);
+            statement.setString(2, "Eletrônicos");
+            statement.executeUpdate();
+        }
+
+        // Inserir dados na tabela Produto
+        String insertProduto = "INSERT INTO Produto (id, nome, preco, categoria_id) VALUES (?, ?, ?, ?)";
+        try (PreparedStatement statement = connection.prepareStatement(insertProduto)) {
+            statement.setInt(1, 1);
+            statement.setString(2, "Smartphone");
+            statement.setBigDecimal(3, java.math.BigDecimal.valueOf(899.99));
+            statement.setInt(4, 1); // Chave estrangeira para a categoria "Eletrônicos"
+            statement.executeUpdate();
+        }
+    }
+
+    private static void selectData(Connection connection) throws SQLException {
+        // Consultar dados na tabela Categoria
+        String selectCategoria = "SELECT * FROM Categoria";
+        try (PreparedStatement statement = connection.prepareStatement(selectCategoria);
+             ResultSet resultSet = statement.executeQuery()) {
+            System.out.println("Tabela Categoria:");
+            while (resultSet.next()) {
+                System.out.println("ID: " + resultSet.getInt("id") + ", Nome: " + resultSet.getString("nome"));
+            }
+        }
+
+        // Consultar dados na tabela Produto
+        String selectProduto = "SELECT * FROM Produto";
+        try (PreparedStatement statement = connection.prepareStatement(selectProduto);
+             ResultSet resultSet = statement.executeQuery()) {
+            System.out.println("\nTabela Produto:");
+            while (resultSet.next()) {
+                System.out.println("ID: " + resultSet.getInt("id") +
+                        ", Nome: " + resultSet.getString("nome") +
+                        ", Preço: " + resultSet.getBigDecimal("preco") +
+                        ", Categoria ID: " + resultSet.getInt("categoria_id"));
+            }
+        }
+    }
+
+    private static void updateData(Connection connection) throws SQLException {
+        // Atualizar dados na tabela Produto
+        String updateProduto = "UPDATE Produto SET preco = ? WHERE id = ?";
+        try (PreparedStatement statement = connection.prepareStatement(updateProduto)) {
+            statement.setBigDecimal(1, java.math.BigDecimal.valueOf(799.99));
+            statement.setInt(2, 1);
+            statement.executeUpdate();
+        }
+    }
+
+    private static void deleteData(Connection connection) throws SQLException {
+        // Remover dados na tabela Produto
+        String deleteProduto = "DELETE FROM Produto WHERE id = ?";
+        try (PreparedStatement statement = connection.prepareStatement(deleteProduto)) {
+            statement.setInt(1, 1);
+            statement.executeUpdate();
+        }
+    }
+}
